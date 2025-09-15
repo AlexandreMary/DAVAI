@@ -58,24 +58,20 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_input(
                 role           = 'Initial Clim',  # PGD
                 format         = 'fa',
-                genv           = self.conf.davaienv,
-                geometry       = self.conf.prep_initial_geometry,
+                genv           = self.conf.appenv_global,
+                geometry       = self.conf.geometry,
                 kind           = 'pgdfa',
                 local          = 'PGD1.[format]',
-                gvar           = 'pgd_fa_[geometry::tag]',
             )
             #-------------------------------------------------------------------------------
-            if self.conf.pgd_source == 'static':
-                # else: 2.1
-                self._wrapped_input(
-                    role           = 'Target Clim',  # PGD
-                    format         = 'fa',
-                    genv           = self.conf.davaienv,
-                    geometry       = self.conf.geometry,
-                    kind           = 'pgdfa',
-                    local          = 'PGD.[format]',
-                    gvar           = 'pgd_fa_[geometry::tag]',
-                )
+            self._wrapped_input(
+                role           = 'Target Clim',  # PGD
+                format         = 'fa',
+                genv           = self.conf.appenv_global,
+                geometry       = self.conf.target_geometries,
+                kind           = 'pgdfa',
+                local          = 'PGD.[format]',
+            )
             #-------------------------------------------------------------------------------
 
         # 1.1.2/ Static Resources (namelist(s) & config):
@@ -107,33 +103,17 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             self._wrapped_input(
                 role           = 'Surface Initial Conditions',
-                block          = 'forecast',
-                experiment     = self.conf.input_shelf,
+                block          = 'surfan',
+                experiment     = self.conf.xpid_init,
                 format         = 'fa',
-                geometry       = self.conf.prep_initial_geometry,
-                kind           = 'historic',
+                geometry       = self.conf.geometry,
+                kind           = 'analysis',
+                filling        = 'surf',
                 local          = 'PREP1.[format]',
                 model          = 'surfex',
-                origin         = 'forecast',
-                term           = 0,
-                vapp           = self.conf.shelves_vapp,
-                vconf          = self.conf.shelves_vconf,
+                vapp           = "arpege",
+                vconf          = "4dvarfr",
             )
-            #-------------------------------------------------------------------------------
-
-        # 2.1/ Flow Resources: produced by another task of the same job
-        if 'fetch' in self.steps:
-            if self.conf.pgd_source == 'flow':
-                # else: 1.1.1
-                self._wrapped_input(
-                    role           = 'Target Clim',  # PGD
-                    block          = self.input_block('finalize_pgd' if self.conf.get('filtered_orography_in_pgd') else 'pgd'),
-                    experiment     = self.conf.xpid,
-                    format         = 'fa',
-                    geometry       = self.conf.geometry,
-                    kind           = 'pgdfa',
-                    local          = 'PGD.[format]',
-                )
             #-------------------------------------------------------------------------------
 
         self._notify_inputs_done()

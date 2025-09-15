@@ -34,23 +34,6 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             self._wrapped_input(**self._reference_continuity_expertise())
             self._wrapped_input(**self._reference_continuity_listing())
-            #-------------------------------------------------------------------------------
-            self._wrapped_input(
-                role           = 'Reference',  # LBC files
-                block          = self.output_block(),
-                experiment     = self.conf.ref_xpid,
-                fatal          = False,
-                format         = 'fa',
-                geometry       = self.conf.target_geometries,
-                kind           = 'boundary',
-                local          = 'ref.[geometry::tag]/MODELSTATE_[model]_[term::fmthm].[geometry::area::upper].out',
-                source_app     = self.conf.source_vapp,
-                source_conf    = self.conf.source_vconf,
-                source_cutoff  = self.conf.cutoff,
-                term           = self.conf.terms,
-                vconf          = self.conf.ref_vconf,
-            )
-            #-------------------------------------------------------------------------------
 
         # 1.1.1/ Static Resources:
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
@@ -59,7 +42,7 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_input(
                 role           = 'Initial Clim',
                 format         = 'fa',
-                genv           = self.conf.davaienv,
+                genv           = self.conf.appenv_global,
                 kind           = 'clim_model',
                 local          = 'Const.Clim.m[month]',
                 month          = [self.conf.rundate.month, self.conf.rundate.month + 1],
@@ -68,37 +51,25 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_input(
                 role           = 'Target Clim',
                 format         = 'fa',
-                genv           = self.conf.appenv_fullpos_partners,
+                genv           = self.conf.davaienv,
                 geometry       = self.conf.target_geometries,
                 kind           = 'clim_model',
                 local          = 'const.clim.[geometry::area::upper].m[month]',
-                model          = 'aladin',
+                model          = 'arpege',
                 month          = [self.conf.rundate.month, self.conf.rundate.month +1],
             )
             #-------------------------------------------------------------------------------
 
         # 1.1.2/ Static Resources (namelist(s) & config):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            self._wrapped_input(
-                role           = 'ObjectNamelist',
-                fp_terms       = {'geotag':{g.tag:FPList(self.conf.terms) for g in self.conf.target_geometries}},
-                geotag         = [g.tag for g in self.conf.target_geometries],
-                kind           = 'namelist_fpobject',
-                local          = 'namelist_obj_[geotag]',
-                path           = f'namelist/arpege/cpl/geometries/' +\
-                                 f'[geotag]_{self.conf.cutoff}.nam',
-                ref            = self.conf.gitenv_ref,
-                repo           = self.conf.gitenv_repo,
-            )
             #-------------------------------------------------------------------------------
             self._wrapped_input(
                 role           = 'Namelist',
-                #hook_z         = (hook_gnam, {'NAMBLOCK':{'LKEY':True, RVALUE:0.}}),
                 intent         = 'inout',
                 kind           = 'namelist',
                 local          = 'fort.4',
-                source         = 'e903_noMCUF.nam',
-                path           = f'namelist/arpege/cpl/e903_noMCUF.nam',
+                source         = 'namelisth2l149',
+                path           = f'namelist/arpege/4dvarfr/namelisth2l149',
                 ref            = self.conf.gitenv_ref,
                 repo           = self.conf.gitenv_repo,
             )
@@ -114,14 +85,14 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             self._wrapped_input(
                 role           = 'Model State',
-                block          = 'forecast',
-                experiment     = self.conf.input_shelf,
+                block          = '4dupd2',
+                experiment     = self.conf.xpid_init,
                 format         = 'fa',
-                kind           = 'historic',
-                local          = 'MODELSTATE_[model]_[term::fmthm]',
-                term           = self.conf.terms,
-                vapp           = self.conf.shelves_vapp,
-                vconf          = self.conf.shelves_vconf,
+                kind           = 'analysis',
+                filling        = 'atm',
+                local          = 'MODELSTATE_[kind]',
+                vapp           = 'arpege',
+                vconf          = '4dvarfr',
             )
             #-------------------------------------------------------------------------------
 

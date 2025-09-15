@@ -97,21 +97,10 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 source         = 'ecoclimap',
             )
             #-------------------------------------------------------------------------------
-            if self.conf.pgd_source == 'static':
-                self._wrapped_input(
-                    role           = 'ClimPGD',
-                    format         = 'fa',
-                    genv           = self.conf.davaienv,
-                    gvar           = 'pgd_fa_[geometry::tag]',
-                    kind           = 'pgdfa',
-                    local          = 'Const.Clim.sfx',
-                )
-                # else: 2.1
-            #-------------------------------------------------------------------------------
             self._wrapped_input(
                 role           = 'Global Clim',
                 format         = 'fa',
-                genv           = self.conf.davaienv,
+                genv           = self.conf.appenv_global,
                 kind           = 'clim_model',
                 local          = 'Const.Clim',
                 month          = self.conf.rundate,
@@ -126,31 +115,31 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 intent         = 'inout',
                 kind           = 'namelist',
                 local          = 'EXSEG1.nam',
-                path           = f'namelist/{self.conf.suite_vapp}/{self.conf.suite_vconf}/namel_previ_surfex',
+                path           = f'namelist/arpege/4dvarfr/namel_previ_surfex',
                 ref            = self.conf.gitenv_ref,
                 repo           = self.conf.gitenv_repo,
             )
             #-------------------------------------------------------------------------------
             # deactivate FPinline & DDH, activate spnorms:
-            tboptions = self._wrapped_input(
-                role           = 'Namelist Deltas to add/remove options',
-                component      = self.conf.namelist_components,
-                kind           = 'namelist',
-                local          = '[component]',
-                path           = f'namelist/davai/[component]',
-                ref            = self.conf.gitenv_ref,
-                repo           = self.conf.gitenv_repo,
-            )
+            #tboptions = self._wrapped_input(
+            #    role           = 'Namelist Deltas to add/remove options',
+            #    component      = self.conf.namelist_components,
+            #    kind           = 'namelist',
+            #    local          = '[component]',
+            #    path           = f'namelist/davai/[component]',
+            #    ref            = self.conf.gitenv_ref,
+            #    repo           = self.conf.gitenv_repo,
+            #)
             #-------------------------------------------------------------------------------
             self._wrapped_input(
                 role           = 'Namelist',
-                hook_options   = (update_namelist, tboptions),
-                hook_conf      = (hook_gnam, self.conf.get('nam_hook', {})),
+                #hook_options   = (update_namelist, tboptions),
+                #hook_conf      = (hook_gnam, self.conf.get('nam_hook', {})),
                 #hook_z         = (hook_gnam, {'NAMBLOCK':{'LKEY':True, RVALUE:0.}}),
                 intent         = 'inout',
                 kind           = 'namelist',
                 local          = 'fort.4',
-                path           = f'namelist/{self.conf.suite_vapp}/{self.conf.suite_vconf}/namelistfc',
+                path           = f'namelist/arpege/4dvarfr/namelistfc',
                 ref            = self.conf.gitenv_ref,
                 repo           = self.conf.gitenv_repo,
             )
@@ -162,14 +151,37 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             tbx = self.flow_executable(kind='mfmodel')
             #-------------------------------------------------------------------------------
 
-        # 1.2/ Flow Resources (initial): theoretically flow-resources, but statically stored in input_shelf
-        if 'early-fetch' in self.steps or 'fetch' in self.steps:
+
+        # 2.1/ Flow Resources: produced by another task of the same job
+        if 'fetch' in self.steps:
+            self._wrapped_input(
+                role           = 'PGD',
+                block          = self.input_block('pgd'),
+                experiment     = self.conf.xpid,
+                format         = 'fa',
+                kind           = 'pgdfa',
+                local          = 'Const.Clim.sfx',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'Surface Initial conditions',
+                block          = self.input_block('prep'),
+                date           = self.conf.rundate,
+                experiment     = self.conf.xpid,
+                format         = '[nativefmt]',
+                filling        = 'surf',
+                kind           = 'ic',
+                local          = 'ICMSHFCSTINIT.sfx',
+                model          = 'surfex',
+                nativefmt      = 'fa',
+            )
             #-------------------------------------------------------------------------------
             self._wrapped_input(
                 role           = 'Atmospheric Initial Conditions',
                 block          = '4dupd2',
                 date           = self.conf.rundate,
-                experiment     = self.conf.input_shelf,
+                experiment     = self.conf.xpid,
+                geometry       = self.target_geometries,
                 format         = '[nativefmt]',
                 kind           = 'analysis',
                 local          = 'ICMSHFCSTINIT',
@@ -177,52 +189,6 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 vapp           = self.conf.shelves_vapp,
                 vconf          = self.conf.shelves_vconf,
             )
-            #-------------------------------------------------------------------------------
-            if self.conf.surf_ic_source == 'static':
-                self._wrapped_input(
-                    role           = 'Surface Initial conditions',
-                    block          = 'surfan',
-                    date           = self.conf.rundate,
-                    experiment     = self.conf.input_shelf,
-                    filling        = 'surf',
-                    format         = '[nativefmt]',
-                    kind           = 'analysis',
-                    local          = 'ICMSHFCSTINIT.sfx',
-                    model          = 'surfex',
-                    nativefmt      = 'fa',
-                    vapp           = self.conf.shelves_vapp,
-                    vconf          = self.conf.shelves_vconf,
-                )
-                # else: 2.1
-            #-------------------------------------------------------------------------------
-
-        # 2.1/ Flow Resources: produced by another task of the same job
-        if 'fetch' in self.steps:
-            if self.conf.pgd_source == 'flow':
-                self._wrapped_input(
-                    role           = 'PGD',
-                    block          = self.input_block('pgd'),
-                    experiment     = self.conf.xpid,
-                    format         = 'fa',
-                    kind           = 'pgdfa',
-                    local          = 'Const.Clim.sfx',
-                )
-                # else: 1.1.1
-            #-------------------------------------------------------------------------------
-            if self.conf.surf_ic_source == 'flow':
-                self._wrapped_input(
-                    role           = 'Surface Initial conditions',
-                    block          = self.input_block('prep'),
-                    date           = self.conf.rundate,
-                    experiment     = self.conf.xpid,
-                    format         = '[nativefmt]',
-                    filling        = 'surf',
-                    kind           = 'ic',
-                    local          = 'ICMSHFCSTINIT.sfx',
-                    model          = 'surfex',
-                    nativefmt      = 'fa',
-                )
-                # else: 1.2
             #-------------------------------------------------------------------------------
 
         self._notify_inputs_done()

@@ -35,74 +35,17 @@ class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_input(**self._reference_continuity_expertise())
             self._wrapped_input(**self._reference_continuity_listing())
             #-------------------------------------------------------------------------------
-            self._wrapped_input(
-                role           = 'Reference',  # LBC files
-                block          = self.output_block(),
-                experiment     = self.conf.ref_xpid,
-                fatal          = False,
-                format         = 'fa',
-                geometry       = self.conf.target_geometries,
-                kind           = 'boundary',
-                local          = 'ref.[geometry::tag]/MODELSTATE_[model]_[term::fmthm].[geometry::area::upper].out',
-                source_app     = self.conf.source_vapp,
-                source_conf    = self.conf.source_vconf,
-                source_cutoff  = self.conf.cutoff,
-                term           = self.conf.terms,
-                vconf          = self.conf.ref_vconf,
-            )
-            #-------------------------------------------------------------------------------
+            pass
 
         # 1.1.1/ Static Resources:
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             self._load_usual_tools()  # LFI tools, ecCodes defs, ...
             #-------------------------------------------------------------------------------
-            self._wrapped_input(
-                role           = 'Initial Clim',
-                format         = 'fa',
-                genv           = self.conf.davaienv,
-                kind           = 'clim_model',
-                local          = 'Const.Clim.m[month]',
-                month          = [self.conf.rundate.month, self.conf.rundate.month + 1],
-            )
-            #-------------------------------------------------------------------------------
-            self._wrapped_input(
-                role           = 'Target Clim',
-                format         = 'fa',
-                genv           = self.conf.appenv_fullpos_partners,
-                geometry       = self.conf.target_geometries,
-                kind           = 'clim_model',
-                local          = 'const.clim.[geometry::area::upper].m[month]',
-                model          = 'aladin',
-                month          = [self.conf.rundate.month, self.conf.rundate.month +1],
-            )
-            #-------------------------------------------------------------------------------
+            pass
 
         # 1.1.2/ Static Resources (namelist(s) & config):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            self._wrapped_input(
-                role           = 'ObjectNamelist',
-                fp_terms       = {'geotag':{g.tag:FPList(self.conf.terms) for g in self.conf.target_geometries}},
-                geotag         = [g.tag for g in self.conf.target_geometries],
-                kind           = 'namelist_fpobject',
-                local          = 'namelist_obj_[geotag]',
-                path           = f'namelist/arpege/cpl/geometries/' +\
-                                 f'[geotag]_{self.conf.cutoff}.nam',
-                ref            = self.conf.gitenv_ref,
-                repo           = self.conf.gitenv_repo,
-            )
-            #-------------------------------------------------------------------------------
-            self._wrapped_input(
-                role           = 'Namelist',
-                #hook_z         = (hook_gnam, {'NAMBLOCK':{'LKEY':True, RVALUE:0.}}),
-                intent         = 'inout',
-                kind           = 'namelist',
-                local          = 'fort.4',
-                source         = 'e903_noMCUF.nam',
-                path           = f'namelist/arpege/cpl/e903_noMCUF.nam',
-                ref            = self.conf.gitenv_ref,
-                repo           = self.conf.gitenv_repo,
-            )
-            #-------------------------------------------------------------------------------
+            pass
 
         # 1.1.3/ Static Resources (executables):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
@@ -112,18 +55,7 @@ class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
 
         # 1.2/ Initial Flow Resources: theoretically flow-resources, but statically stored in input_shelf
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            self._wrapped_input(
-                role           = 'Model State',
-                block          = 'forecast',
-                experiment     = self.conf.input_shelf,
-                format         = 'fa',
-                kind           = 'historic',
-                local          = 'MODELSTATE_[model]_[term::fmthm]',
-                term           = self.conf.terms,
-                vapp           = self.conf.shelves_vapp,
-                vconf          = self.conf.shelves_vconf,
-            )
-            #-------------------------------------------------------------------------------
+            pass
 
         # 2.1/ Flow Resources: produced by another task of the same job
         if 'fetch' in self.steps:
@@ -133,39 +65,11 @@ class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         self._notify_inputs_done()
         # 2.2/ Compute step
         if 'compute' in self.steps:
-            self._notify_start_compute()
-            self.sh.title('Toolbox algo = tbalgo')
-            tbalgo = toolbox.algo(
-                crash_witness  = True,
-                drhookprof     = self.conf.drhook_profiling,
-                engine         = 'parallel',
-                kind           = 'fpserver',
-                outdirectories = [g.tag for g in self.conf.target_geometries],
-            )
-            print(self.ticket.prompt, 'tbalgo =', tbalgo)
-            print()
-            self.component_runner(tbalgo, tbx)
-            #-------------------------------------------------------------------------------
-            self.run_expertise()
-            #-------------------------------------------------------------------------------
+            pass
 
         # 2.3/ Flow Resources: produced by this task and possibly used by a subsequent flow-dependant task
         if 'backup' in self.steps:
-            self._wrapped_output(
-                role           = 'LBC files',
-                block          = self.output_block(),
-                experiment     = self.conf.xpid,
-                format         = 'fa',
-                geometry       = self.conf.target_geometries,
-                kind           = 'boundary',
-                local          = '[geometry::tag]/MODELSTATE_[model]_[term::fmthm].[geometry::area::upper].out',
-                namespace      = self.REF_OUTPUT,
-                source_app     = self.conf.source_vapp,
-                source_conf    = self.conf.source_vconf,
-                source_cutoff  = self.conf.cutoff,
-                term           = self.conf.terms,
-            )
-            #-------------------------------------------------------------------------------
+            pass
 
         # 3.0.1/ Davai expertise:
         if 'late-backup' in self.steps or 'backup' in self.steps:
