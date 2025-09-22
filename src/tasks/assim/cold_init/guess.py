@@ -115,7 +115,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 intent         = 'inout',
                 kind           = 'namelist',
                 local          = 'EXSEG1.nam',
-                path           = f'namelist/arpege/4dvarfr/namel_previ_surfex',
+                path           = f'namelist/{self.conf.source_vapp}/{self.conf.source_vconf}/namel_previ_surfex',
                 ref            = self.conf.gitenv_ref,
                 repo           = self.conf.gitenv_repo,
             )
@@ -139,7 +139,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 intent         = 'inout',
                 kind           = 'namelist',
                 local          = 'fort.4',
-                path           = f'namelist/arpege/4dvarfr/namelistfc',
+                path           = f'namelist/{self.conf.source_vapp}/{self.conf.source_vconf}/namelistfc',
                 ref            = self.conf.gitenv_ref,
                 repo           = self.conf.gitenv_repo,
             )
@@ -156,11 +156,13 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'fetch' in self.steps:
             self._wrapped_input(
                 role           = 'PGD',
-                block          = self.input_block('pgd'),
-                experiment     = self.conf.xpid,
                 format         = 'fa',
                 kind           = 'pgdfa',
                 local          = 'Const.Clim.sfx',
+                geometry       = self.conf.geometry,
+                genv           = self.conf.davaienv,
+                gvar           = 'pgd_fa_[geometry::tag]',
+
             )
             #-------------------------------------------------------------------------------
             self._wrapped_input(
@@ -181,13 +183,11 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 block          = '4dupd2',
                 date           = self.conf.rundate,
                 experiment     = self.conf.xpid,
-                geometry       = self.target_geometries,
+                geometry       = self.conf.geometry,
                 format         = '[nativefmt]',
                 kind           = 'analysis',
                 local          = 'ICMSHFCSTINIT',
                 nativefmt      = 'fa',
-                vapp           = self.conf.shelves_vapp,
-                vconf          = self.conf.shelves_vconf,
             )
             #-------------------------------------------------------------------------------
 
@@ -222,7 +222,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 format         = '[nativefmt]',
                 kind           = 'historic',
                 local          = 'ICMSHFCST+{glob:term:\d+(?::\d+)?}',
-                namespace      = self.REF_OUTPUT,
+                namespace      = 'vortex.multi.fr',
                 nativefmt      = 'fa',
                 term           = '[glob:term]',
                 fatal          = False
@@ -236,7 +236,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 kind           = 'historic',
                 local          = 'ICMSHFCST+{glob:term:\d+(?::\d+)?}.sfx',
                 model          = 'surfex',
-                namespace      = self.REF_OUTPUT,
+                namespace      = 'vortex.multi.fr',
                 nativefmt      = 'fa',
                 term           = '[glob:term]',
                 fatal          = False

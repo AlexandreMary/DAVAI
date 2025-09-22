@@ -59,7 +59,7 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 role           = 'Initial Clim',  # PGD
                 format         = 'fa',
                 genv           = self.conf.appenv_global,
-                geometry       = self.conf.geometry,
+                geometry       = self.conf.source_geometry,
                 kind           = 'pgdfa',
                 local          = 'PGD1.[format]',
             )
@@ -67,9 +67,10 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_input(
                 role           = 'Target Clim',  # PGD
                 format         = 'fa',
-                genv           = self.conf.appenv_global,
-                geometry       = self.conf.target_geometries,
+                genv           = self.conf.davaienv,
+                geometry       = self.conf.geometry,
                 kind           = 'pgdfa',
+                gvar           = 'pgd_fa_[geometry::tag]',
                 local          = 'PGD.[format]',
             )
             #-------------------------------------------------------------------------------
@@ -84,7 +85,7 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 intent         = 'inout',
                 kind           = 'namelist',
                 local          = 'OPTIONS.nam',
-                path           = f'namelist/{self.conf.suite_vapp}/{self.conf.prep_suite_vconf}/{self.conf.prep_namelist}',
+                path           = f'namelist/{self.conf.suite_vapp}/{self.conf.source_vconf}/{self.conf.prep_namelist}',
                 ref            = self.conf.gitenv_ref,
                 repo           = self.conf.gitenv_repo,
             )
@@ -106,13 +107,13 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 block          = 'surfan',
                 experiment     = self.conf.xpid_init,
                 format         = 'fa',
-                geometry       = self.conf.geometry,
+                geometry       = self.conf.source_geometry,
                 kind           = 'analysis',
                 filling        = 'surf',
                 local          = 'PREP1.[format]',
                 model          = 'surfex',
-                vapp           = "arpege",
-                vconf          = "4dvarfr",
+                vapp           = self.conf.source_vapp,
+                vconf          = self.conf.source_vconf,
             )
             #-------------------------------------------------------------------------------
 
@@ -147,7 +148,7 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 kind           = 'ic',
                 local          = 'PREP1_interpolated.[format]',
                 model          = 'surfex',
-                namespace      = self.REF_OUTPUT,
+                namespace      = 'vortex.multi.fr',
             )
             #-------------------------------------------------------------------------------
 

@@ -21,7 +21,8 @@ forecasts:
 
 assim:
     # arpege
-    - arpege_COLD_INIT  # make initial conditions
+    - arpege_COLD_INIT_FP  # make initial conditions atmo
+    - arpege_COLD_INIT_PGF  # make initial conditions prep guess and fetch all
     - arpege_BA4DVar_OOPS  # BA = Bator+Analysis (all-in-one)
     - arpege_BSHM4DVar_OOPS  # BSHM = Bator+Screening+H(TL/AD)+Minim
     - arpege_BSM4DVar_CNT0  # BSM = Bator+Screening+Minim

@@ -43,6 +43,7 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 role           = 'Initial Clim',
                 format         = 'fa',
                 genv           = self.conf.appenv_global,
+                geometry       = self.conf.source_geometry
                 kind           = 'clim_model',
                 local          = 'Const.Clim.m[month]',
                 month          = [self.conf.rundate.month, self.conf.rundate.month + 1],
@@ -52,11 +53,19 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 role           = 'Target Clim',
                 format         = 'fa',
                 genv           = self.conf.davaienv,
-                geometry       = self.conf.target_geometries,
+                geometry       = self.conf.geometry,
                 kind           = 'clim_model',
                 local          = 'const.clim.[geometry::area::upper].m[month]',
                 model          = 'arpege',
                 month          = [self.conf.rundate.month, self.conf.rundate.month +1],
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'RrtmConst',
+                format         = 'unknown',
+                genv           = self.conf.appenv,
+                kind           = 'rrtm',
+                local          = 'rrtm.const.tgz',
             )
             #-------------------------------------------------------------------------------
 
@@ -90,9 +99,10 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 format         = 'fa',
                 kind           = 'analysis',
                 filling        = 'atm',
-                local          = 'MODELSTATE_[kind]',
-                vapp           = 'arpege',
-                vconf          = '4dvarfr',
+                geometry       = self.conf.source_geometry
+                local          = 'ICMSHCEXPINIT',
+                vapp           = self.conf.source_vapp,
+                vconf          = self.conf.source_vconf,
             )
             #-------------------------------------------------------------------------------
 
@@ -110,8 +120,8 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 crash_witness  = True,
                 drhookprof     = self.conf.drhook_profiling,
                 engine         = 'parallel',
-                kind           = 'fpserver',
-                outdirectories = [g.tag for g in self.conf.target_geometries],
+                kind           = 'l2h',
+                outdirectories = self.conf.geometry,
             )
             print(self.ticket.prompt, 'tbalgo =', tbalgo)
             print()
@@ -123,18 +133,14 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         # 2.3/ Flow Resources: produced by this task and possibly used by a subsequent flow-dependant task
         if 'backup' in self.steps:
             self._wrapped_output(
-                role           = 'LBC files',
+                role           = 'Analysis',
                 block          = self.output_block(),
                 experiment     = self.conf.xpid,
                 format         = 'fa',
-                geometry       = self.conf.target_geometries,
-                kind           = 'boundary',
-                local          = '[geometry::tag]/MODELSTATE_[model]_[term::fmthm].[geometry::area::upper].out',
-                namespace      = self.REF_OUTPUT,
-                source_app     = self.conf.source_vapp,
-                source_conf    = self.conf.source_vconf,
-                source_cutoff  = self.conf.cutoff,
-                term           = self.conf.terms,
+                geometry       = self.conf.geometry,
+                kind           = 'analysis',
+                local          = 'PFFPOS000+0000',
+                namespace      = 'vortex.multi.fr',
             )
             #-------------------------------------------------------------------------------
 

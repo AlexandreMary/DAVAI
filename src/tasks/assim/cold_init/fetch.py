@@ -41,7 +41,29 @@ class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             self._load_usual_tools()  # LFI tools, ecCodes defs, ...
             #-------------------------------------------------------------------------------
-            pass
+            tbmap = self._wrapped_input(
+                role           = 'Obsmap',
+                block          = self.input_block(),
+                experiment     = self.conf.source_obs,
+                format         = 'ascii',
+                kind           = 'obsmap',
+                local          = 'bator_map',
+                stage          = 'build',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'Observations',
+                block          = self.input_block(),
+                experiment     = self.conf.obs_source,
+                format         = 'odb',
+                intent         = 'inout',
+                helper         = tbmap[0].contents,
+                kind           = 'observations',
+                local          = '[actualfmt].[part]',
+                part           = tbmap[0].contents.odbset(),
+                stage          = 'build',
+            )
+            #-------------------------------------------------------------------------------
 
         # 1.1.2/ Static Resources (namelist(s) & config):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
