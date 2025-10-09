@@ -43,7 +43,7 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 role           = 'Initial Clim',
                 format         = 'fa',
                 genv           = self.conf.appenv_global,
-                geometry       = self.conf.source_geometry
+                geometry       = self.conf.source_geometry,
                 kind           = 'clim_model',
                 local          = 'Const.Clim.m[month]',
                 month          = [self.conf.rundate.month, self.conf.rundate.month + 1],
@@ -99,7 +99,7 @@ class Fp_init(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 format         = 'fa',
                 kind           = 'analysis',
                 filling        = 'atm',
-                geometry       = self.conf.source_geometry
+                geometry       = self.conf.source_geometry,
                 local          = 'ICMSHCEXPINIT',
                 vapp           = self.conf.source_vapp,
                 vconf          = self.conf.source_vconf,

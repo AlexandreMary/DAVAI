@@ -180,7 +180,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             #-------------------------------------------------------------------------------
             self._wrapped_input(
                 role           = 'Atmospheric Initial Conditions',
-                block          = '4dupd2',
+                block          = 'assim.arpege_COLD_INIT_FP@fp_init',
                 date           = self.conf.rundate,
                 experiment     = self.conf.xpid,
                 geometry       = self.conf.geometry,
@@ -204,6 +204,12 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 fcterm         = self.conf.fcst_term,
                 fcunit         = 'h',
                 timestep       = self.conf.timestep,
+                hist_term      = [0,3,6],
+                iolocation     = "0",
+                pos_terms      = [],
+                s_norm_terms   = [0],
+                surfhist_terms = [3, 6],
+                timescheme     = 'sli'
             )
             print(self.ticket.prompt, 'tbalgo =', tbalgo)
             print()

@@ -5,16 +5,17 @@ from footprints import FPDict
 import vortex
 from vortex import toolbox
 from vortex.layout.nodes import Task
-
+from common.util.hooks import update_namelist
 import davai
+
 from davai.vtx.tasks.mixins import DavaiIALTaskMixin, IncludesTaskMixin
-from davai.vtx.hooks.namelists import hook_gnam
 
 
-class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
+class PGD(Task, DavaiIALTaskMixin, IncludesTaskMixin):
 
-    experts = [FPDict({'expert':'fields_in_file', 'kind':'initial_condition'}),]
-    _flow_input_task_tag = 'pgd'
+    experts = [FPDict({'expert':'fields_in_file', 'kind':'pgdfa'}),]
+    _taskinfo_kind = 'statictaskinfo'
+    _flow_input_task_tag = 'makeglobaldomain'
 
     def process(self):
         self._wrapped_init()
@@ -28,17 +29,14 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         # 1.1.0/ Reference resources, to be compared to:
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             self._wrapped_input(**self._reference_continuity_expertise())
-            #-------------------------------------------------------------------------------
             self._wrapped_input(
-                role           = 'Reference',  # Surface output IC
+                role           = 'Reference',  # PgdFile
                 block          = self.output_block(),
                 experiment     = self.conf.ref_xpid,
-                filling        = 'surf',
                 fatal          = False,
                 format         = 'fa',
-                kind           = 'ic',
-                local          = 'ref.PREP1_interpolated.[format]',
-                model          = 'surfex',
+                kind           = 'pgdfa',
+                local          = 'ref.PGD.[format]',
                 vconf          = self.conf.ref_vconf,
             )
             #-------------------------------------------------------------------------------
@@ -50,48 +48,70 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_input(
                 role           = 'CoverParams',
                 format         = 'foo',
-                genv           = self.conf.commonenv,
+                genv           = self.conf.appenv_clim,
                 kind           = 'coverparams',
                 local          = 'ecoclimap_covers_param.tgz',
                 source         = 'ecoclimap',
             )
             #-------------------------------------------------------------------------------
             self._wrapped_input(
-                role           = 'Initial Clim',  # PGD
-                format         = 'fa',
-                #genv           = self.conf.init_pgd_genv,
-                #geometry       = self.conf.source_geometry,
-                remote         = "/scratch/work/suzat/pgd_arpege.t1798.06.fa",
-                kind           = 'pgdfa',
-                local          = 'PGD1.[format]',
+                role           = 'Sand DB',
+                format         = 'dir/hdr',
+                genv           = self.conf.appenv_clim,
+                kind           = 'sand',
+                local          = 'sand_DB.tgz',
+                source         = self.conf.sand_source,
             )
             #-------------------------------------------------------------------------------
             self._wrapped_input(
-                role           = 'Surface Initial Conditions',
-                block          = 'surfan',
-                experiment     = self.conf.xpid_init,
-                format         = 'fa',
-                geometry       = self.conf.source_geometry,
-                kind           = 'analysis',
-                filling        = 'surf',
-                local          = 'PREP1.[format]',
-                model          = 'surfex',
-                vapp           = self.conf.source_vapp,
-                vconf          = self.conf.source_vconf,
+                role           = 'Clay DB',
+                format         = 'dir/hdr',
+                genv           = self.conf.appenv_clim,
+                kind           = 'clay',
+                local          = 'clay_DB.tgz',
+                source         = self.conf.clay_source,
             )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'Surface Type DB',
+                format         = 'dir/hdr',
+                genv           = self.conf.appenv_clim,
+                kind           = 'surface_type',
+                local          = 'surfacetype_DB.tgz',
+                source         = self.conf.surface_type_source,
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'Orography DB',
+                format         = 'dir/hdr',
+                genv           = self.conf.appenv_clim,
+                geometry       = self.conf.orography_geometry,
+                kind           = 'orography',
+                local          = 'orography_DB.tgz',
+                source         = self.conf.orography_source,
+            )
+            #-------------------------------------------------------------------------------
+            if 'bathymetry_source' in self.conf:
+                self._wrapped_input(
+                    role           = 'Bathymetry DB',
+                    format         = 'dir/hdr',
+                    genv           = self.conf.appenv_clim,
+                    geometry       = self.conf.bathymetry_geometry,
+                    kind           = 'bathymetry',
+                    local          = 'etopo.tgz',
+                    source         = self.conf.bathymetry_source,
+                )
             #-------------------------------------------------------------------------------
 
         # 1.1.2/ Static Resources (namelist(s) & config):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            self._wrapped_input(
+            #-------------------------------------------------------------------------------
+            tbnam = self._wrapped_input(
                 role           = 'Namelist',
-                # FIXME: update PGD so as to be able to have gelato seaice scheme ?
-                #flo halo 0 cause problem in t1798 to 149
-                hook_halo      = (hook_gnam, {'NAM_PREP_SURF_ATM':{'NHALO_PREP':10}, }),
                 intent         = 'inout',
                 kind           = 'namelist',
                 local          = 'OPTIONS.nam',
-                path           = f'namelist/{self.conf.suite_vapp}/{self.conf.source_vconf}/{self.conf.prep_namelist}',
+                path           = f'namelist/{self.conf.suite_vapp}/clim/namel_buildpgd',
                 ref            = self.conf.gitenv_ref,
                 repo           = self.conf.gitenv_repo,
             )
@@ -101,23 +121,34 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             #-------------------------------------------------------------------------------
             tbx = self.flow_executable(
-                kind           = 'prep',
-                local          = 'PREP.X',
+                kind           = 'buildpgd',
+                local          = 'PGD.X',
             )
             #-------------------------------------------------------------------------------
 
         # 1.2/ Flow Resources (initial): theoretically flow-resources, but statically stored in input_shelf
-        if 'fetch' in self.steps:
+        if 'early-fetch' in self.steps or 'fetch' in self.steps:
+            pass
             #-------------------------------------------------------------------------------
-            self._wrapped_input(
-                role           = 'Target Clim',  # PGD
+
+        # 2.1/ Flow Resources: produced by another task of the same job
+        if 'fetch' in self.steps:
+            tbgeo = self._wrapped_input(
+                role           = 'Namelist',
                 block          = self.input_block(),
                 experiment     = self.conf.xpid,
-                format         = 'fa',
-                geometry       = self.conf.geometry,
-                kind           = 'pgdfa',
-                local          = 'PGD.[format]',
+                format         = 'ascii',
+                geometry       = self.conf.geometry.tag,
+                intent         = 'in',
+                kind           = 'geoblocks',
+                local          = '{}.namel_buildpgd.geoblocks'.format(self.conf.geometry.tag),
+                target         = 'buildpgd',
             )
+            #-------------------------------------------------------------------------------
+
+        # complete namelist with geometry, wherever/whenever we picked it
+        if 'fetch' in self.steps:
+            update_namelist(self.ticket, tbnam[0], *tbgeo)
 
         self._notify_inputs_done()
         # 2.2/ Compute step
@@ -127,9 +158,8 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             tbalgo = toolbox.algo(
                 crash_witness  = True,
                 drhookprof     = self.conf.drhook_profiling,
-                engine         = 'parallel',
-                kind           = 'prep',
-                underlyingformat = 'fa',
+                engine         = 'blind',
+                kind           = 'buildpgd',
             )
             print(self.ticket.prompt, 'tbalgo =', tbalgo)
             print()
@@ -142,15 +172,13 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'backup' in self.steps:
             #-------------------------------------------------------------------------------
             self._wrapped_output(
-                role           = 'Target Surface Conditions',
+                role           = 'PgdFile',
                 block          = self.output_block(),
                 experiment     = self.conf.xpid,
-                filling        = 'surf',
                 format         = 'fa',
-                kind           = 'ic',
-                local          = 'PREP1_interpolated.[format]',
-                model          = 'surfex',
-                namespace      = 'vortex.multi.fr',
+                kind           = 'pgdfa',
+                local          = 'PGD.[format]',
+                namespace      = self.REF_OUTPUT,
             )
             #-------------------------------------------------------------------------------
 
@@ -164,3 +192,4 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'late-backup' in self.steps or 'backup' in self.steps:
             self._wrapped_output(**self._output_listing())
             #-------------------------------------------------------------------------------
+
