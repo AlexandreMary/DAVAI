@@ -127,7 +127,7 @@ class Prep(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             tbalgo = toolbox.algo(
                 crash_witness  = True,
                 drhookprof     = self.conf.drhook_profiling,
-                engine         = 'parallel',
+                engine         = 'blind',
                 kind           = 'prep',
                 underlyingformat = 'fa',
             )
