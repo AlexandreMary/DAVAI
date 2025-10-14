@@ -224,7 +224,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_output(
                 role           = 'ModelState',
                 block          = self.output_block(),
-                experiment     = self.conf.xpid,
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
                 format         = '[nativefmt]',
                 kind           = 'historic',
                 local          = 'ICMSHFCST+{glob:term:\d+(?::\d+)?}',
@@ -237,7 +237,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             self._wrapped_output(
                 role           = 'SurfState',
                 block          = self.output_block(),
-                experiment     = self.conf.xpid,
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
                 format         = '[nativefmt]',
                 kind           = 'historic',
                 local          = 'ICMSHFCST+{glob:term:\d+(?::\d+)?}.sfx',
