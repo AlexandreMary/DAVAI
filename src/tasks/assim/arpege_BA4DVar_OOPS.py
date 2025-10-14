@@ -13,7 +13,7 @@ def setup(t, **kw):
         Family(tag='arpege', ticket=t, nodes=[
             Family(tag='4dvar6h', ticket=t, nodes=[
                 Family(tag='default_compilation_flavour', ticket=t, nodes=[
-                    BatorODB(tag='batodb', ticket=t, **kw),
+                    #BatorODB(tag='batodb', ticket=t, **kw),
                     Analysis4dvar(tag='analysis', ticket=t, **kw),
                     ], **kw),
                 ], **kw),

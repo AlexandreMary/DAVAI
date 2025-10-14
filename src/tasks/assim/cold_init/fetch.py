@@ -9,7 +9,7 @@ from vortex.layout.nodes import Task, Driver
 import davai
 from davai.vtx.tasks.mixins import DavaiIALTaskMixin, IncludesTaskMixin
 from davai.vtx.hooks.namelists import hook_gnam
-
+import common
 
 class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
 
@@ -24,85 +24,217 @@ class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         self._wrapped_init()
         self._notify_start_inputs()
 
-        # 0./ Promises
-        if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            self._wrapped_promise(**self._promised_listing())
-            self._wrapped_promise(**self._promised_expertise())
-            #-------------------------------------------------------------------------------
 
-        # 1.1.0/ Reference resources, to be compared to:
-        if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            self._wrapped_input(**self._reference_continuity_expertise())
-            self._wrapped_input(**self._reference_continuity_listing())
-            #-------------------------------------------------------------------------------
-            pass
-
+        obstype = self.conf.get('obstype', None)
         # 1.1.1/ Static Resources:
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             self._load_usual_tools()  # LFI tools, ecCodes defs, ...
             #-------------------------------------------------------------------------------
             tbmap = self._wrapped_input(
                 role           = 'Obsmap',
-                block          = self.input_block(),
-                experiment     = self.conf.source_obs,
+                block          = 'observations',
+                experiment     = self.conf.source_obs[0],
+                vapp           = self.conf.source_obs[1],
+                vconf          = self.conf.source_obs[2],
                 format         = 'ascii',
                 kind           = 'obsmap',
                 local          = 'bator_map',
-                stage          = 'build',
+                # if obstype is not specified (in conf or loop), get all obstypes from Bator Map:
+                only           = FPSet([obstype]) if obstype else None,
+                discard        = FPSet([self.conf.discard_obstype]) if 'discard_obstype' in self.conf else None,
+                scope          = self.conf.obsmap_scope,
+                stage          = 'extract',
             )
             #-------------------------------------------------------------------------------
             self._wrapped_input(
                 role           = 'Observations',
-                block          = self.input_block(),
-                experiment     = self.conf.obs_source,
-                format         = 'odb',
-                intent         = 'inout',
+                block          = 'observations',
+                experiment     = self.conf.source_obs[0],
+                vapp           = self.conf.source_obs[1],
+                vconf          = self.conf.source_obs[2],
+                fatal          = False,
+                format         = '[helper:getfmt]',
                 helper         = tbmap[0].contents,
                 kind           = 'observations',
                 local          = '[actualfmt].[part]',
-                part           = tbmap[0].contents.odbset(),
-                stage          = 'build',
+                part           = tbmap[0].contents.dataset(),
+                stage          = 'extract',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'Varbc',
+                block          = '4dupd2',
+                experiment     = self.conf.source_obs[0],
+                vapp           = self.conf.source_obs[1],
+                vconf          = self.conf.source_obs[2],
+                format         = 'ascii',
+                intent         = 'inout',
+                kind           = 'varbc',
+                local          = 'varbc',
+                stage          = 'traj',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'BackgroundStdError',
+                block          = 'sigmab',
+                geometry       = 'globalupd224',
+                date           = '{}/-{}'.format(self.conf.rundate, self.conf.cyclestep),
+                experiment     = self.conf.source_obs[0],
+                vapp           = self.conf.source_obs[1],
+                vconf          = self.conf.source_obs[2],
+                hook_split     = 'common.util.usepygram.split_errgrib_on_shortname',
+                format         = 'grib',
+                kind           = 'bgstderr',
+                local          = 'sigma_b',
+                stage          = 'scr',
+                term           = self.conf.cyclestep,
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'BackgroundStdError',
+                block          = 'covb',
+                geometry       = 'globalupd224',
+                date           = '{}/-{}'.format(self.conf.rundate, self.conf.cyclestep),
+                experiment     = self.conf.source_ensemble[0],
+                vapp           = self.conf.source_ensemble[1],
+                vconf          = self.conf.source_ensemble[2],
+                hook_split     = 'common.util.usepygram.split_errgrib_on_shortname',
+                format         = 'grib',
+                kind           = 'bgstderr',
+                local          = 'errgrib_[geometry:truncation]_',
+                stage          = 'vor',
+                term           = '3',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'BlacklistGlobal',
+                block          = 'observations',
+                experiment     = self.conf.source_obs[0],
+                vapp           = self.conf.source_obs[1],
+                vconf          = self.conf.source_obs[2],
+                format         = 'ascii',
+                kind           = 'blacklist',
+                local          = 'LISTE_NOIRE_DIAP',
+                scope          = 'global',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'BlacklistLocal',
+                block          = 'observations',
+                experiment     = self.conf.source_obs[0],
+                vapp           = self.conf.source_obs[1],
+                vconf          = self.conf.source_obs[2],
+                format         = 'ascii',
+                kind           = 'blacklist',
+                local          = 'LISTE_LOC',
+                scope          = 'local',
             )
             #-------------------------------------------------------------------------------
 
-        # 1.1.2/ Static Resources (namelist(s) & config):
-        if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            pass
 
-        # 1.1.3/ Static Resources (executables):
-        if 'early-fetch' in self.steps or 'fetch' in self.steps:
+
+        if 'late-backup' in self.steps:
+            tbmapout = self._wrapped_output(
+                role           = 'Obsmap',
+                block          = 'obsraw',
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
+                format         = 'ascii',
+                kind           = 'obsmap',
+                local          = 'bator_map',
+                scope          = self.conf.obsmap_scope,
+                only           = FPSet([obstype]) if obstype else None,
+                discard        = FPSet([self.conf.discard_obstype]) if 'discard_obstype' in self.conf else None,
+                stage          = 'extract',
+                namespace      = 'vortex.multi.fr',
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
+            )
             #-------------------------------------------------------------------------------
-            tbx = self.flow_executable()
+            self._wrapped_output(
+                role           = 'ObservationsODB',
+                block          = 'obsraw',
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
+                format         = '[helper:getfmt]',
+                helper         = tbmapout[0].contents,
+                kind           = 'observations',
+                local          = '[actualfmt].[part]',
+                part           = tbmapout[0].contents.dataset(),
+                stage          = 'extract',
+                namespace      = 'vortex.multi.fr',
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
+            )
             #-------------------------------------------------------------------------------
-
-        # 1.2/ Initial Flow Resources: theoretically flow-resources, but statically stored in input_shelf
-        if 'early-fetch' in self.steps or 'fetch' in self.steps:
-            pass
-
-        # 2.1/ Flow Resources: produced by another task of the same job
-        if 'fetch' in self.steps:
-            pass
+            self._wrapped_output(
+                role           = 'Varbc',
+                block          = '4dupd2',
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
+                format         = 'ascii',
+                intent         = 'inout',
+                kind           = 'varbc',
+                local          = 'varbc',
+                stage          = 'traj',
+                namespace      = 'vortex.multi.fr',
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
+            )
             #-------------------------------------------------------------------------------
-
-        self._notify_inputs_done()
-        # 2.2/ Compute step
-        if 'compute' in self.steps:
-            pass
-
-        # 2.3/ Flow Resources: produced by this task and possibly used by a subsequent flow-dependant task
-        if 'backup' in self.steps:
-            pass
-
-        # 3.0.1/ Davai expertise:
-        if 'late-backup' in self.steps or 'backup' in self.steps:
-            self._wrapped_output(**self._output_expertise())
-            self._wrapped_output(**self._output_comparison_expertise())
+            self._wrapped_output(
+                role           = 'BackgroundStdError',
+                block          = 'sigmab',
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
+                date           = '{}/-{}'.format(self.conf.rundate, self.conf.cyclestep),
+                geometry       = 'globalupd224',
+                format         = 'grib',
+                kind           = 'bgstderr',
+                local          = 'sigma_b[variable]',
+                variable       = 'u,v,t,q,r,lnsp,gh,btmp,vo',
+                stage          = 'scr',
+                term           = self.conf.cyclestep,
+                namespace      = 'vortex.multi.fr',
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
+            )
             #-------------------------------------------------------------------------------
-
-        # 3.0.2/ Other output resources of possible interest:
-        if 'late-backup' in self.steps or 'backup' in self.steps:
-            self._wrapped_output(**self._output_listing())
-            self._wrapped_output(**self._output_stdeo())
-            self._wrapped_output(**self._output_drhook_profiles())
+            self._wrapped_output(
+                role           = 'BackgroundStdError',
+                block          = 'covb',
+                geometry       = 'globalupd224',
+                date           = '{}/-{}'.format(self.conf.rundate, self.conf.cyclestep),
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
+                format         = 'grib',
+                kind           = 'bgstdrenorm',
+                local          = 'errgrib_[geometry:truncation]_[variable]',
+                variable       = 'vo,ucdv,uctp,ucln,q',
+                stage          = 'vor',
+                term           = '3',
+                namespace      = 'vortex.multi.fr',
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_output(
+                role           = 'BlacklistGlobal',
+                block          = 'obsraw',
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
+                format         = 'ascii',
+                kind           = 'blacklist',
+                local          = 'LISTE_NOIRE_DIAP',
+                scope          = 'global',
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_output(
+                role           = 'BlacklistLocal',
+                block          = 'obsraw',
+                experiment     = [self.conf.xpid,self.conf.update_shelf],
+                format         = 'ascii',
+                kind           = 'blacklist',
+                local          = 'LISTE_LOC',
+                scope          = 'local',
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
+            )
             #-------------------------------------------------------------------------------
 
