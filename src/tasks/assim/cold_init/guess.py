@@ -223,7 +223,7 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             #-------------------------------------------------------------------------------
             self._wrapped_output(
                 role           = 'ModelState',
-                block          = self.output_block(),
+                block          = 'forecast',
                 experiment     = [self.conf.xpid,self.conf.update_shelf],
                 format         = '[nativefmt]',
                 kind           = 'historic',
@@ -231,12 +231,14 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 namespace      = 'vortex.multi.fr',
                 nativefmt      = 'fa',
                 term           = '[glob:term]',
-                fatal          = False
+                fatal          = False,
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
             )
             #-------------------------------------------------------------------------------
             self._wrapped_output(
                 role           = 'SurfState',
-                block          = self.output_block(),
+                block          = 'forecast',
                 experiment     = [self.conf.xpid,self.conf.update_shelf],
                 format         = '[nativefmt]',
                 kind           = 'historic',
@@ -245,7 +247,9 @@ class Guess(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 namespace      = 'vortex.multi.fr',
                 nativefmt      = 'fa',
                 term           = '[glob:term]',
-                fatal          = False
+                fatal          = False,
+                vapp           = self.conf.shelves_vapp,
+                vconf          = self.conf.shelves_vconf,
             )
             #-------------------------------------------------------------------------------
 

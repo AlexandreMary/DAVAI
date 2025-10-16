@@ -101,7 +101,7 @@ class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 hook_split     = 'common.util.usepygram.split_errgrib_on_shortname',
                 format         = 'grib',
                 kind           = 'bgstderr',
-                local          = 'errgrib_[geometry:truncation]_',
+                local          = 'errgrib',
                 stage          = 'vor',
                 term           = '3',
             )
@@ -198,13 +198,13 @@ class Fetch(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             #-------------------------------------------------------------------------------
             self._wrapped_output(
                 role           = 'BackgroundStdError',
-                block          = 'covb',
+                block          = 'sigmab',
                 geometry       = 'globalupd224',
                 date           = '{}/-{}'.format(self.conf.rundate, self.conf.cyclestep),
                 experiment     = [self.conf.xpid,self.conf.update_shelf],
                 format         = 'grib',
-                kind           = 'bgstdrenorm',
-                local          = 'errgrib_[geometry:truncation]_[variable]',
+                kind           = 'bgstderr',
+                local          = 'errgrib[variable]',
                 variable       = 'vo,ucdv,uctp,ucln,q',
                 stage          = 'vor',
                 term           = '3',

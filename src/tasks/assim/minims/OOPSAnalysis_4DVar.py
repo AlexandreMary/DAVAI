@@ -349,10 +349,12 @@ class Analysis4dvar(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 experiment     = self.conf.input_shelf,
                 format         = 'grib',
                 kind           = 'bgstderr',
+                geometry       = 'globalupd224',
                 local          = 'errgrib.[variable]',
                 stage          = 'vor',
                 term           = '3',  # FIXME: self.guess_term(force_window_start=True),
-                variable       = ['vo','ucdv','lnsp','t','q'],
+                #variable       = ['vo','ucdv','lnsp','t','q'],
+                variable       = 'vo,ucdv,uctp,ucln,q',
                 vapp           = self.conf.shelves_vapp,
                 vconf          = self.conf.shelves_vconf,
             )
