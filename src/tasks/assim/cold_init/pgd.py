@@ -116,7 +116,20 @@ class PGD(Task, DavaiIALTaskMixin, IncludesTaskMixin):
                 repo           = self.conf.gitenv_repo,
             )
             #-------------------------------------------------------------------------------
+            tbgeo = self._wrapped_input(
+                role           = 'Namelist',
+                format         = 'ascii',
+                geometry       = self.conf.geometry.tag,
+                intent         = 'in',
+                kind           = 'geoblocks',
+                local          = '{}.namel_buildpgd.geoblocks'.format(self.conf.geometry.tag),
+                target         = 'buildpgd',
+                path           = f'geometries/{self.conf.geometry.tag}/buildpgd',
+                ref            = self.conf.gitenv_ref,
+                repo           = self.conf.gitenv_repo,
+            )
 
+            update_namelist(self.ticket, tbnam[0], *tbgeo)
         # 1.1.3/ Static Resources (executables):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             #-------------------------------------------------------------------------------
@@ -130,25 +143,6 @@ class PGD(Task, DavaiIALTaskMixin, IncludesTaskMixin):
         if 'early-fetch' in self.steps or 'fetch' in self.steps:
             pass
             #-------------------------------------------------------------------------------
-
-        # 2.1/ Flow Resources: produced by another task of the same job
-        if 'fetch' in self.steps:
-            tbgeo = self._wrapped_input(
-                role           = 'Namelist',
-                block          = self.input_block(),
-                experiment     = self.conf.xpid,
-                format         = 'ascii',
-                geometry       = self.conf.geometry.tag,
-                intent         = 'in',
-                kind           = 'geoblocks',
-                local          = '{}.namel_buildpgd.geoblocks'.format(self.conf.geometry.tag),
-                target         = 'buildpgd',
-            )
-            #-------------------------------------------------------------------------------
-
-        # complete namelist with geometry, wherever/whenever we picked it
-        if 'fetch' in self.steps:
-            update_namelist(self.ticket, tbnam[0], *tbgeo)
 
         self._notify_inputs_done()
         # 2.2/ Compute step
