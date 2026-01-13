@@ -18,11 +18,11 @@ def setup(t, **kw):
         Family(tag='default_compilation_flavour', ticket=t, nodes=[
             Family(tag='arpege', ticket=t, nodes=[
                 Family(tag='cold_init', ticket=t, nodes=[
-                    #MakeGlobalDomain(tag='MakeGlobalDomain', ticket=t, **kw),
-                    #PGD(tag='pgd', ticket=t, **kw),
-                    #Prep(tag='prep', ticket=t, **kw),
+                    MakeGlobalDomain(tag='MakeGlobalDomain', ticket=t, **kw),
+                    PGD(tag='pgd', ticket=t, **kw),
+                    Prep(tag='prep', ticket=t, **kw),
                     Guess(tag='guess', ticket=t, **kw),
-                    #Fetch(tag='fetch', ticket=t, **kw),
+                    Fetch(tag='fetch', ticket=t, **kw),
                     ], **kw),
                 ], **kw),
             ], **kw),
