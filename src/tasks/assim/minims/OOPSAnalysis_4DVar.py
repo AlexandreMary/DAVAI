@@ -144,6 +144,22 @@ class Analysis4dvar(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             )
             #-------------------------------------------------------------------------------
             self._wrapped_input(
+                role           = 'MwaveRtCoef',
+                format         = 'unknown',
+                genv           = self.conf.appenv,
+                kind           = 'mwave_rtcoef',
+                local          = 'mwave_resources.tgz',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
+                role           = 'Telsem Emis Atlas',
+                genv           = self.conf.appenv,
+                kind           = 'atlas_emissivity',
+                source         = 'telsem',
+                local          = 'telsem2_mw_atlas.tgz',
+            )
+            #-------------------------------------------------------------------------------
+            self._wrapped_input(
                 role           = 'Stabal',
                 format         = 'unknown',
                 genv           = self.conf.appenv,
@@ -210,7 +226,7 @@ class Analysis4dvar(Task, DavaiIALTaskMixin, IncludesTaskMixin):
             #-------------------------------------------------------------------------------
             self._wrapped_input(
                 role           = 'ChannelsNamelist',
-                channel        = 'cris331,iasi314',
+                channel        = 'cris431,iasi314',
                 kind           = 'namelist',
                 local          = 'namchannels_[channel]',
                 path           = 'namelist/arpege/4dvarfr/namelist[channel]',
